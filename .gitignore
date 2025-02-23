@@ -1,0 +1,4 @@
+.DS_Store
+venv/
+initdb/init.sql
+show.html

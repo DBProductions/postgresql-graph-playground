@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres
+    ports:
+    - "5432:5432"
+    #env_file: .env
+    volumes:
+    - ./initdb:/docker-entrypoint-initdb.d
+    environment: 
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=postgres
+volumes:
+  dbvolume01: {}
