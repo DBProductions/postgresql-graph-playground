@@ -83,7 +83,7 @@ Query the graph for getting all nodes, all labels of the nodes or all nodes with
     SELECT DISTINCT label FROM nodes;
     SELECT * FROM nodes WHERE label='User';
 
-Get all outgoing or incoming nodes for a specific node with id equals one.
+Get all outgoing or incoming nodes for a specific node (id = 1).
 
     SELECT *
       FROM nodes
@@ -95,7 +95,7 @@ Get all outgoing or incoming nodes for a specific node with id equals one.
     JOIN edges ON nodes.id = edges.previous_node
       WHERE edges.next_node = 1;
 
-Get the ids of the nodes connected to nodes where node with id equals one is connected to.
+Retrieve the IDs of the nodes that are connected to the nodes associated with the node (id = 1).
 
     SELECT DISTINCT e2.next_node
       FROM edges AS e1 
@@ -107,7 +107,7 @@ Get the ids of the nodes connected to nodes where node with id equals one is con
         e1.next_node <> 1 AND 
         e2.next_node <> 1;
 
-Use `UNION` to get a depth of the relationshsip.
+Use `UNION` explore depth of relationships.
 
     SELECT DISTINCT nodes.id, 1 AS depth
       FROM nodes 
