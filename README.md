@@ -25,10 +25,11 @@ pip install -r requirements.txt
 
 #### Generate SQL for Data
 
-Before starting the database, you'll need to create the necessary SQL to populate it with data. The script fetches random user data from `https://randomuser.me` to populate the database.
+Before starting the database, you'll need to create the necessary SQL to populate it with data.  
+The script fetches random user data from `https://randomuser.me` to populate the database.
 
 ```bash
-python generate_sql.py # creates 500 nodes as default
+python generate_sql.py      # creates 500 nodes as default
 python generate_sql.py 2000 # creates 2000 nodes
 ...
 ```
@@ -43,7 +44,7 @@ You can use Docker Compose to set up and start the PostgreSQL database.
 docker compose up
 ```
 
-This will start the PostgreSQL container and set up the database with executing the `init.sql` script.
+This will start the PostgreSQL container and set up the database with executing the `./initdb/init.sql` script.
 
 #### View the Graph
 
@@ -116,7 +117,12 @@ Use `UNION` to get a depth of the relationshsip.
     SELECT DISTINCT e2.next_node, 2 AS depth
       FROM edges AS e1 
     JOIN edges AS e2 ON e1.next_node = e2.previous_node 
-      WHERE e1.label = 'LIKES' AND e2.label = 'LIKES' AND e1.previous_node = 1 AND e1.next_node <> 1 AND e2.next_node <> 1;
+      WHERE 
+        e1.label = 'LIKES' AND         
+        e2.label = 'LIKES' AND 
+        e1.previous_node = 1 AND 
+        e1.next_node <> 1 AND 
+        e2.next_node <> 1;
 
 Use `RECURSIVE` to get the depth and path from one node to another.
 
@@ -134,11 +140,16 @@ Use `RECURSIVE` to get the depth and path from one node to another.
           likes.path || edges.previous_node
         FROM likes
           JOIN edges ON edges.previous_node = likes.id
-          WHERE NOT edges.next_node = ANY(likes.path) AND likes.depth < 3
+          WHERE NOT edges.next_node = ANY(likes.path)
     )
     SELECT id, depth, path || id AS path
     FROM likes
     WHERE depth <= 2;
+
+The script executes some of the SQL statements and print it as table to the console.
+
+    python sql_queries.py     # uses node id 1 as default
+    python sql_queries.py 100 # uses node id 100
 
 How to define the SQL queries and the structure of the graph is depending on the use case.  
 This was an example for the posibility to use PostgreSQL as graph database.
