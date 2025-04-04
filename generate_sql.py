@@ -14,6 +14,11 @@ json_data = response.json()
 
 sql_file = open('./initdb/init.sql', 'w')
 
+# products
+products = []
+for p in range(10):
+    products.append(f'Product {p + 1}')
+
 # prepare dates in a range
 numdays = 100
 base = datetime.today()
@@ -37,10 +42,20 @@ CREATE TABLE edges (
   CHECK (previous_node != next_node)
 );
 
-CREATE INDEX edges_label ON nodes (label);
+CREATE INDEX edges_label ON edges (label);
+CREATE INDEX edges_next_node ON edges (next_node);
 \n"""
 
 sql_file.write(create_tables)
+sql_file.write('-- products\n')
+for product in products:
+    s = ('INSERT INTO nodes (label, props) VALUES '
+         f'(\'Product\', \'{{"name": "{product}"}}\')'
+         ';\n')
+    sql_file.write(s)
+
+sql_file.write('\n')
+
 sql_file.write('-- random user\n')
 for result in json_data['results']:
     res = choices(res_dates)
@@ -54,40 +69,57 @@ for result in json_data['results']:
 sql_file.write('\n')
 
 sql_file.write('-- edges for first user\n')
-random_list = sample(range(1, nodes), 10)
+random_list = sample(range(12, nodes), 15)
 for i in random_list:
     res = choices(res_dates)
     ts = round(res[0].timestamp())
     s = ('INSERT INTO edges (previous_node, next_node, label, props) VALUES '
-         f'(1, {i}, \'LIKES\', \'{{"since": {ts}}}\')'
+         f'(11, {i}, \'LIKES\', \'{{"since": {ts}}}\')'
         ';\n')
     sql_file.write(s)
 
 sql_file.write('\n')
 
 sql_file.write('-- edges for second user\n')
-random_list = sample(range(2, nodes), 10)
+random_list = sample(range(13, nodes), 10)
 for i in random_list:
     res = choices(res_dates)
     ts = round(res[0].timestamp())
     s = ('INSERT INTO edges (previous_node, next_node, label, props) VALUES '
-         f'(2, {i}, \'LIKES\', \'{{"since": {ts}}}\')'
+         f'(12, {i}, \'LIKES\', \'{{"since": {ts}}}\')'
         ';\n')
     sql_file.write(s)
 
 sql_file.write('\n')
 
 sql_file.write('-- random edges for user\n')
-r = sample(range(2, nodes), nodes - 2)
-for i in range(3, nodes):
+r = sample(range(11, nodes), nodes - 11)
+for i in range(11, round(nodes/4)):
     _r = choices(r)
-    if i == _r[0]:
-        while i == _r[0]:
-            _r = choices(r)
+    while i == _r[0]:
+        _r = choices(r)
     res = choices(res_dates)
     ts = round(res[0].timestamp())
     s = ('INSERT INTO edges (previous_node, next_node, label, props) VALUES '
          f'({i}, {_r[0]}, \'LIKES\', \'{{"since": {ts}}}\')'
+        ';\n')
+    sql_file.write(s)
+
+sql_file.write('\n')
+
+sql_file.write('-- user product relationships\n')
+user_product_relationships = ['CONTRIBUTES', 'USES']
+for i in range(nodes):
+    product = choices(products)
+    label = choices(user_product_relationships)[0]
+    if label == 'CONTRIBUTES':
+        previous = i + 11
+        next = product[0].split(' ')[1]
+    elif label == 'USES':
+        previous = product[0].split(' ')[1]
+        next = i + 11
+    s = ('INSERT INTO edges (previous_node, next_node, label, props) VALUES '
+        f'({previous}, {next}, \'{label}\', \'{{"since": {ts}}}\')'
         ';\n')
     sql_file.write(s)
 

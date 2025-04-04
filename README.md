@@ -57,21 +57,22 @@ Run the following command:
 python display.py
 ```
 
-This will create a visualization of the graph, showing users and their `LIKES` relationships.
+This will create a visualization of the graph.
 
 ![graph screenshot](graph.png "Graph Screenshot")
 
 ### Database Structure
 
-- **Nodes**: Represented by the `USER` label. Each node contains a `label` (string) and `props` (JSON) to store relevant information.
-- **Edges**: Represented by the `LIKES` label, indicating the relationship between users. Each edge has a `previous` and `next` field containing the ID of the respective nodes to show the direction of the relationship.
+- **Nodes**: Represented by the `Product` and `User` label. Each node contains a `label` (string) and `props` (JSON) to store relevant information.
+- **Edges**: Represented by the `LIKES` label, indicating the relationship between users. Each edge has a `previous` and `next` field containing the ID of the respective nodes to show the direction of the relationship. Relationships between users and products are represented by the `CONTRIBUTES` or `USES` label.
 
 ### Example Use Case
 
-In this example, all users (nodes) have the `USER` label, and edges (connections between users) have the `LIKES` label, forming a graph where `USER`, `LIKES` each other.
+In this example, all users (nodes) have the `USER` label, and edges (connections between users) have the `LIKES` label, forming a graph where `USER`, `LIKES` each other and user `CONTRIBUTES` or `USES` a product.
+ 
+The first ten nodes are products and user nodes are following, so the first user node have the id 11.
 
 It's simple to add other labels to have different nodes with different edges.  
-To extend to a `USER` `LIKES` `PRODUCT` or `USER`, `WORKS`, `COMPANY` graph structure.
 
 This is just a basic example of using PostgreSQL for graph-like data storage. You can modify the SQL schema and queries in the `generate_sql.py` script to suit your specific use case and graph structure.
 
@@ -83,19 +84,19 @@ Query the graph for getting all nodes, all labels of the nodes or all nodes with
     SELECT DISTINCT label FROM nodes;
     SELECT * FROM nodes WHERE label='User';
 
-Get all outgoing or incoming nodes for a specific node (id = 1).
+Get all outgoing or incoming nodes for a specific node (id = 11).
 
     SELECT *
       FROM nodes
     JOIN edges ON nodes.id = edges.next_node
-      WHERE edges.previous_node = 1;
+      WHERE edges.previous_node = 11;
 
     SELECT *
       FROM nodes
     JOIN edges ON nodes.id = edges.previous_node
-      WHERE edges.next_node = 1;
+      WHERE edges.next_node = 11;
 
-Retrieve the IDs of the nodes that are connected to the nodes associated with the node (id = 1).
+Retrieve the IDs of the nodes that are connected to the nodes associated with the node (id = 11).
 
     SELECT DISTINCT e2.next_node
       FROM edges AS e1 
@@ -103,15 +104,15 @@ Retrieve the IDs of the nodes that are connected to the nodes associated with th
       WHERE 
         e1.label = 'LIKES' AND 
         e2.label = 'LIKES' AND 
-        e1.previous_node = 1 AND 
-        e1.next_node <> 1 AND 
+        e1.previous_node = 11 AND 
+        e1.next_node <> 11 AND 
         e2.next_node <> 1;
 
-Use `UNION` explore depth of relationships.
+Use `UNION` explore depth of relationships from the node (id = 11).
 
     SELECT DISTINCT nodes.id, 1 AS depth
       FROM nodes 
-    JOIN edges ON nodes.id = edges.next_node AND edges.previous_node = 1 
+    JOIN edges ON nodes.id = edges.next_node AND edges.previous_node = 11 
       WHERE edges.label = 'LIKES'    
     UNION
     SELECT DISTINCT e2.next_node, 2 AS depth
@@ -120,11 +121,11 @@ Use `UNION` explore depth of relationships.
       WHERE 
         e1.label = 'LIKES' AND         
         e2.label = 'LIKES' AND 
-        e1.previous_node = 1 AND 
-        e1.next_node <> 1 AND 
-        e2.next_node <> 1;
+        e1.previous_node = 11 AND 
+        e1.next_node <> 11 AND 
+        e2.next_node <> 11;
 
-Use `RECURSIVE` to get the depth and path from one node to another.
+Use `RECURSIVE` to get the depth and path from one node to another from the node (id = 1).
 
     WITH RECURSIVE likes AS (
         SELECT
@@ -132,7 +133,7 @@ Use `RECURSIVE` to get the depth and path from one node to another.
           1 AS depth,
           ARRAY[previous_node] AS path
         FROM edges
-          WHERE previous_node = 1
+          WHERE previous_node = 11 AND label = 'LIKES'
         UNION ALL
         SELECT
           edges.next_node,
@@ -140,7 +141,7 @@ Use `RECURSIVE` to get the depth and path from one node to another.
           likes.path || edges.previous_node
         FROM likes
           JOIN edges ON edges.previous_node = likes.id
-          WHERE NOT edges.next_node = ANY(likes.path)
+          WHERE NOT edges.next_node = ANY(likes.path) AND label = 'LIKES'
     )
     SELECT id, depth, path || id AS path
     FROM likes
@@ -148,7 +149,7 @@ Use `RECURSIVE` to get the depth and path from one node to another.
 
 The script executes some of the SQL statements and print it as table to the console.
 
-    python sql_queries.py     # uses node id 1 as default
+    python sql_queries.py     # uses node id 11 as default
     python sql_queries.py 100 # uses node id 100
 
 How to define the SQL queries and the structure of the graph is depending on the use case.  

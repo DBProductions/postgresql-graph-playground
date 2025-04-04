@@ -16,10 +16,18 @@ g = Network(width='100%',
 
 cursor.execute('SELECT * FROM nodes')
 for i in cursor.fetchall():
-    g.add_node(i[0], size=20, label=f'{i[0]} {i[2]['name']}', title=f'{i[2]}')
+    color = 'blue'
+    if i[1] == 'Product':
+        color = 'green'
+    g.add_node(i[0], size=20, label=f'{i[0]} {i[2]['name']}', title=f'{i[2]}', color=color)
 
 cursor.execute('SELECT * FROM edges')
 for i in cursor.fetchall():
-    g.add_edge(i[0], i[1], title=f'{i[2]}\n{i[3]}')
+    color = 'blue'
+    if i[2] == 'USES':
+        color = 'black'
+    elif i[2] == 'CONTRIBUTES':
+        color = 'green'
+    g.add_edge(i[0], i[1], title=f'{i[2]}\n{i[3]}', color=color)
 
 g.show('show.html', notebook=False)
